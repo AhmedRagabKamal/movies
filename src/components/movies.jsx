@@ -9,13 +9,17 @@ import { orderBy } from 'lodash-es';
 
 class Movies extends Component {
   state = {
-    movies: getMovies(),
+    movies: [],
     pageSize: 4,
     currentPage: 1,
     genres: [{ _id: '', name: 'All' }, ...getGenres()],
     selectedGenre: '',
     columnSort: { path: 'title', order: 'asc' }
   };
+
+  componentDidMount() {
+    this.setState({ movies: getMovies() });
+  }
 
   handleDelete = ({ _id }) => {
     const movies = this.state.movies.filter(movie => movie._id !== _id);
@@ -49,6 +53,7 @@ class Movies extends Component {
       genres,
       columnSort
     } = this.state;
+    const { history } = this.props;
     const { length: count } = allMovies;
     if (count === 0) return <p>There is no movie in database</p>;
     const filtered =
@@ -67,6 +72,12 @@ class Movies extends Component {
           />
         </div>
         <div className="col">
+          <button
+            onClick={() => history.push('/new-movie')}
+            className="btn btn-primary btn-sm"
+          >
+            New movie
+          </button>
           <p>Show {filtered.length} movie in database</p>
           <MoviesTable
             movies={movies}
