@@ -6,6 +6,7 @@ import { getGenres } from '../services/fakeGenreService';
 import ListGroup from '../common/listGroup';
 import MoviesTable from './moviesTable';
 import { orderBy } from 'lodash-es';
+import SearchBox from './searchBox';
 
 class Movies extends Component {
   state = {
@@ -14,7 +15,8 @@ class Movies extends Component {
     currentPage: 1,
     genres: [{ _id: '', name: 'All' }, ...getGenres()],
     selectedGenre: '',
-    columnSort: { path: 'title', order: 'asc' }
+    columnSort: { path: 'title', order: 'asc' },
+    search: ''
   };
 
   componentDidMount() {
@@ -38,10 +40,13 @@ class Movies extends Component {
   };
 
   handleSelectGenre = genre => {
-    this.setState({ selectedGenre: genre, currentPage: 1 });
+    this.setState({ selectedGenre: genre, search: '', currentPage: 1 });
   };
   handleSort = columnSort => {
     this.setState({ columnSort });
+  };
+  handleSearch = search => {
+    this.setState({ search, currentPage: 1, selectedGenre: '' });
   };
 
   render() {
@@ -51,15 +56,22 @@ class Movies extends Component {
       currentPage,
       selectedGenre,
       genres,
-      columnSort
+      columnSort,
+      search
     } = this.state;
     const { history } = this.props;
     const { length: count } = allMovies;
     if (count === 0) return <p>There is no movie in database</p>;
-    const filtered =
-      selectedGenre && selectedGenre._id
-        ? allMovies.filter(movie => movie.genre._id === selectedGenre._id)
-        : allMovies;
+    let filtered = allMovies;
+    if (search) {
+      filtered = allMovies.filter(movie =>
+        movie.title.toLowerCase().startsWith(search.toLocaleLowerCase())
+      );
+    } else if (selectedGenre && selectedGenre._id) {
+      filtered = allMovies.filter(
+        movie => movie.genre._id === selectedGenre._id
+      );
+    }
     const sorted = orderBy(filtered, [columnSort.path], [columnSort.order]);
     const movies = paginate(sorted, currentPage, pageSize);
     return (
@@ -79,6 +91,7 @@ class Movies extends Component {
             New movie
           </button>
           <p>Show {filtered.length} movie in database</p>
+          <SearchBox search={search} onSearch={this.handleSearch} />
           <MoviesTable
             movies={movies}
             onLiked={this.handleLiked}
